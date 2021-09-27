@@ -22,7 +22,7 @@
     $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --target-dir /table1 --username root
     /*create a target directory /table1 */
 
-#To import table named table1 from hive to sqoop
+#To import table named table1 from mysql to hive
     $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --hive-import --create-hive-table --username root
     /*when we import mysql data to hdfs using sqoop,it will be stored in /user/hive/warehouse
     To visualize stored table named test in hdfs,  hdfs dfs -ls /user/hive/warehouse/test

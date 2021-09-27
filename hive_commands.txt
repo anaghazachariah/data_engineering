@@ -1,4 +1,4 @@
-#To get mysql command prompt
+#To get hive command prompt
     $hive
 
 #To see all databases
@@ -16,3 +16,9 @@
 
 #To visualize all data in table1
     >select * from table1;
+
+#To create a table called table1 with roll_no(integer) as a primary key,name varchar
+    >create table table1 (roll_no int primary key,name string);
+
+#To load data from a data.csv to table1
+    >load data local inpath '/home/training/data.csv' into table table1;

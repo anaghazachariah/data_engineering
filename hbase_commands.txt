@@ -1,0 +1,16 @@
+/* check status of servers
+    cd /etc/init.d 
+    ./hbase-master status
+    ./hbase-regionserver status
+    ./zookeeper-server status
+if all status are not running
+    cd /usr/lib/zookeeper/bin/
+    ./zkServer.sh start
+    cd /etc/init.d/
+    ./hbase-master start
+    ./hbase-regionserver start
+    
+#To get hbase command prompt
+    $hbase shell
+
+
