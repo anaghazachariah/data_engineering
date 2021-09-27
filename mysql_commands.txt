@@ -1,0 +1,25 @@
+#To get started
+    $sudo su #working in root mode
+    $cd ~ #working from root directory
+
+#To get mysql command prompt
+    $mysql
+
+#To see all databases
+    >show databases;
+
+#To use a database named my_database
+    >use my_database
+
+#To see tables inside selected database(this step should be done after selecting database)
+    >show tables;
+
+#To create a table called table1 with roll_no(integer) as a primary key,name varchar
+    >create table table1 (roll_no int primary key,name varchar(20));
+
+#To add data to table1
+    >insert into table1 values(1,'ana');
+
+#To visualize all data in table1
+    >select * from table1;
+

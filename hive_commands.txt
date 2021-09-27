@@ -1,0 +1,18 @@
+#To get mysql command prompt
+    $hive
+
+#To see all databases
+    >show databases;
+
+#To create database my_database
+    >create database my_database
+
+#To use a database named my_database
+    >use my_database
+
+#To see tables inside selected database
+    >show tables;
+    /* if this step performed without selecting the database tables in default database will be displayed*/
+
+#To visualize all data in table1
+    >select * from table1;

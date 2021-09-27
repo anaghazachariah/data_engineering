@@ -1,0 +1,31 @@
+#To see all databases in mysql
+    $sqoop list-databases --connect jdbc:mysql://localhost --username root
+
+#To get list of tables in a database named my_database
+    $sqoop list-tables --connect jdbc:mysql://localhost/my_database --username root
+
+#To import table named table1
+    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --username root
+    /*when we import mysql data to hdfs using sqoop,it will be stored in /user/root/
+    To visualize stored table named test in hdfs,  hdfs dfs -ls /user/root/test/
+    */
+    /*In case if map reducers are not working
+            sudo su
+            cd ~
+            cd /etc/init.d 
+            ./hadoop-yarn-nodemanager start
+    */
+    /* to visualize contents
+        hdfs dfs -cat /user/root/table1/part-m-00001
+
+#To save imported tabel to a target directory
+    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --target-dir /table1 --username root
+    /*create a target directory /table1 */
+
+#To import table named table1 from hive to sqoop
+    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --hive-import --create-hive-table --username root
+    /*when we import mysql data to hdfs using sqoop,it will be stored in /user/hive/warehouse
+    To visualize stored table named test in hdfs,  hdfs dfs -ls /user/hive/warehouse/test
+    */  
+
+
