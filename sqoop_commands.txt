@@ -4,6 +4,9 @@
 #To get list of tables in a database named my_database
     $sqoop list-tables --connect jdbc:mysql://localhost/my_database --username root
 
+#To get list of tables in a database named my_database with logs
+    $sqoop list-tables --connect jdbc:mysql://localhost/my_database --username root --verbose
+
 #To import table named table1
     $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --username root
     /*when we import mysql data to hdfs using sqoop,it will be stored in /user/root/
@@ -27,5 +30,13 @@
     /*when we import mysql data to hdfs using sqoop,it will be stored in /user/hive/warehouse
     To visualize stored table named test in hdfs,  hdfs dfs -ls /user/hive/warehouse/test
     */  
+
+#To import table named table1 from mysql to hive and save it in hive as new_table(in this case primary key in mysql table is id)
+    $sqoop import --hbase-create-table --hbase-table new_table --column-family info --hbase-row-key id --connect jdbc:mysql://localhost/vit --username root --table tabel1 -m 1
+
+
+#To import data to hdfs from mysql with 1 mapper
+    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --username root -m 1
+    /*  here number of mappers=1,it can be changed to any number.But if no.mappers>no.of records then computer will no.of mappers=max.no of records
 
 

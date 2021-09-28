@@ -1,16 +1,52 @@
-/* check status of servers
-    cd /etc/init.d 
-    ./hbase-master status
-    ./hbase-regionserver status
-    ./zookeeper-server status
-if all status are not running
-    cd /usr/lib/zookeeper/bin/
-    ./zkServer.sh start
-    cd /etc/init.d/
-    ./hbase-master start
-    ./hbase-regionserver start
+/* 
+sudo su
+cd ~
+sh restart.sh
+*/
     
 #To get hbase command prompt
     $hbase shell
+
+#To see contents of table name my_table
+    scan 'my_table'
+
+#create a table named my_table
+    create 'my_table','info','deapartments'
+
+#to describe a table
+    describe 'my_table'
+
+#to enter details to table
+    put 'my_table' ,01,'info:name','anagha'
+    /*here my_table is table name,01 is the row number,name is the column(
+        if you want to create new column just type that here..no other declaration
+        needed.'anagha' is the value for column name
+    )*/
+
+#to update a row in table
+    put 'my_table',01,'info:name','ammu'
+    /*anagha will updated to ammu*/
+
+#to see old values
+    scan 'my_table', {VERSIONS =>3} 
+    /*3 denote 3rd updated version
+    /*here we can see anagha and ammu.The old value is on bottom and new value is on top
+
+#To get rows based on column
+    get 'my_table', 01
+    /*gives the record with id 01
+
+#to count number of rows in table
+    count 'my_table'
+
+#to delete row
+    delete 'my_table',01 'info:name'
+
+#to exit hive
+    exit
+
+
+
+
 
 
