@@ -22,3 +22,44 @@
 
 #To load data from a data.csv to table1
     >load data local inpath '/home/training/data.csv' into table table1;
+
+#To describe a table
+    > describe tabel
+
+#To create a table in hive and add data to it from .csv file
+    >create table table1(id int,name string) row format delimited fields terminated by ',';
+    >load data local inpath '/home/training/file1.csv' into table table1;
+    >select id,name from table1;#NOT working
+
+#counting characters
+    $vi story.txt
+    $hdfs dfs -mkdir /story
+    $hdfs dfs -put story.txt /story/
+
+    > create table input(text_lines string);
+    >load data inpath '/story' into table input;
+    >create table wordcount as select word,count(*) from input LATERAL VIEW explode(split(text_lines,' ')) 1table as word group by word;
+
+            OR(THE LAST LINE FROM ABOVE SECTION CAN BE REPLACED BY)
+
+    >select split(text_lines,' ') from input;    
+    >create view input_split as select split(text_lines,' ') as word from input;
+    >select explode(word) as w from input_split;   
+    >create view input_explode as select explode(word) as w from input_split;
+    >select w,count(*) from input_explode group by w;
+
+#To see records within given limit   
+    >select * from input limit 1;   /*gives first record..if limit2 give 2 records
+
+    
+ #movie
+    $create database movie;
+    $create table movie(mid int,mname string,year string) row format delimited fields terminated by '\t';
+    $load data inpath '/movie_data/movie/' into table movie;
+    $create table genre(gid int,genre string) row format delimited fields terminated by '\t';
+    $load data inpath '/movie_data/genre/' into table genre;
+    $create table moviegenre(mid int,gid int) row format delimited fields terminated by '\t';
+    $load data inpath '/movie_data/moviegenre/' into table moviegenre;
+    $create table movierating(uid int,mid int,rating int) row format delimited fields terminated by '\t';
+    $load data inpath '/movie_data/movierating/' into table movierating;
+   

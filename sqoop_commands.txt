@@ -1,3 +1,18 @@
+
+
+#To import table named table1 from mysql to hive
+    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --hive-import --create-hive-table --username root
+    /*when we import mysql data to hdfs using sqoop,it will be stored in /user/hive/warehouse
+    To visualize stored table named test in hdfs,  hdfs dfs -ls /user/hive/warehouse/test
+    */  
+
+#To import table named table1 from mysql to hbase and save it in hbase as new_table(in this case primary key in mysql table is id)
+    $sqoop import --hbase-create-table --hbase-table new_table --column-family info --hbase-row-key id --connect jdbc:mysql://localhost/vit --username root --table tabel1 -m 1
+
+
+IMPORTING DATA FROM SQL TO HDFS 
+***********************
+
 #To see all databases in mysql
     $sqoop list-databases --connect jdbc:mysql://localhost --username root
 
@@ -25,18 +40,101 @@
     $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --target-dir /table1 --username root
     /*create a target directory /table1 */
 
-#To import table named table1 from mysql to hive
-    $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --hive-import --create-hive-table --username root
-    /*when we import mysql data to hdfs using sqoop,it will be stored in /user/hive/warehouse
-    To visualize stored table named test in hdfs,  hdfs dfs -ls /user/hive/warehouse/test
-    */  
-
-#To import table named table1 from mysql to hive and save it in hive as new_table(in this case primary key in mysql table is id)
-    $sqoop import --hbase-create-table --hbase-table new_table --column-family info --hbase-row-key id --connect jdbc:mysql://localhost/vit --username root --table tabel1 -m 1
-
-
 #To import data to hdfs from mysql with 1 mapper
     $sqoop import --connect jdbc:mysql://localhost/my_database --table table1 --username root -m 1
     /*  here number of mappers=1,it can be changed to any number.But if no.mappers>no.of records then computer will no.of mappers=max.no of records
+
+#To create a directory for tables inside specified directory
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --table table1 --warehouse-dir /vit
+    /* a directory with same name of table will be created inside /vit
+
+#To import subset of data
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --table table1 --target-dir /vit/folder1 --where "id=1"
+    /*to get all records with id=1
+
+#To import data as sequence file
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --table table1 --target-dir /vit/a2 --as-sequencefile
+
+#To import data as avro file
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --table table1 --target-dir /vit/a3 --as-avrodatafile
+
+#to import only new data
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --target-dir /vit/a6--table table1 --incremental append --check-column id --last-value 0
+    /*import all record with id>=0,we can execute this command many times in the same dir..it import only record >=last value
+
+#To get rows with given dates greater than a specific date
+    $sqoop import --connect jdbc:mysql://localhost/vit --username root --target-dir /vit/ee1 --table teach --incremental lastmodified --check-column day_time --last-value "2013-05-23"
+
+
+#To create a job in hdfs
+    $sqoop job --create newjob -- import --connect jdbc:mysql://localhost/vit --username root --table table1 --target-dir /vit/a4
+    $sqoop job --exec newjob
+    /*newjob is the job name
+
+#To see list of jobs
+    $sqoop job --list
+
+#To delete a job
+    sqoop job --delete newjob  /*newjob is the job name
+
+#To preserve last imported value
+    $sqoop job --create newjob -- import --connect jdbc:mysql://localhost/vit --username root --table table1 --target-dir /vit/a5 --incremental append --check-column id --last-value 0
+    /* here the primary key is id and job name is newjob
+    $sqoop job --exec newjob  /*whenever we execute this we will get updated table..the mapreducer have to bring new records only
+
+
+EXPORT DATA TO MYSQL FROM HDFS
+******************************
+
+#To transfer a csv file from hdfs to mysql
+    $sqoop export --connect jdbc:mysql://localhost/vit --table newtable --username root  -export-dir /ana.csv
+    /*here ana.csv will be transfered to table named newtable in mysql. newtable have to be created prior to the transfer.
+
+#To export csv file sepated by ,
+    $sqoop export --connect jdbc:mysql://localhost/vit --table newtable --username root  -export-dir /ana.csv --input-fields-terminated-by ','
+
+#To export table in hdfs to mysql
+    $sqoop export --connect jdbc:mysql://localhost/vit --table sqltable --export-dir /vit/a1 --username root
+    /*sqltable is the table in mysql and /vit/a1 is the directory in hdfs containing data
+
+        OR 
+    
+    $sqoop export --connect jdbc:mysql://localhost/vit --table sqltable --export-dir /vit/a1 --username root --batch 
+    /*to insert multiple rows as a batch in mysql table
+
+        OR
+
+    $sqoop export -Dsqoop.export.records.per.statement=10 --connect jdbc:mysql://localhost/vit --table sqltable --export-dir /vit/a1 --username root
+    /*to insert given number of statements in each insert statement
+
+        OR 
+
+    $sqoop export -Dsqoop.export.statements.per.transaction=10 --connect jdbc:mysql://localhost/vit --table sqltable --export-dir /vit/a1 --username root
+    #to specify number of rows in transaction
+
+#Exporting with unordered columns
+    $sqoop export --connect jdbc:mysql://localhost/vit --table sqltable --columns id,name,dep --export-dir /vit/a1 --username root 
+    /*here the order of columns in sqltable is name,id,dep.the order in hdfs table is  id,name,dep..we can correct this in command.
+    /*write  the order of hdfs data in command
+
+#Exporting values only for few columns and giving NULL for other columns in a row
+    $sqoop export --connect jdbc:mysql://localhost/vit --table sqltable --columns id,name --export-dir /vit/a1 --username root
+    /*here we are sending only id and name(we should always send primary key)
+
+#To update a row with given primary key (here id) as in hdfs table
+    $sqoop export --connect jdbc:mysql://localhost/vit --username root --table sqltable --update-key id_in_sql --export-dir /vit/a1
+    /*id_in_sql is the primary key in sql table
+
+
+ ERROR tool.ExportTool: Error during export: Mixed update/insert is not supported against the target database yet
+
+
+
+
+
+
+
+
+
 
 

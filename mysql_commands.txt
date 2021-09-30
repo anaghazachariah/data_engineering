@@ -14,8 +14,8 @@
 #To see tables inside selected database(this step should be done after selecting database)
     >show tables;
 
-#To create a table called table1 with roll_no(integer) as a primary key,name varchar
-    >create table table1 (roll_no int primary key,name varchar(20));
+#To create a table called table1 with roll_no(integer) as a primary key,name varchar,day_time DATE
+    >create table table1 (roll_no int primary key,name varchar(20),day_time DATE);
 
 #To add data to table1
     >insert into table1 values(1,'ana');
