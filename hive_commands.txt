@@ -66,7 +66,7 @@
     >load data local inpath '/home/training/zakku/dancer' into table a5 partition(job_name="dancer"); 
     /*creates 3 partition..
     >select * from a5 where job_name="dancer";
-    /*because of partition select statement takes less time 
+    /*because of partition select statement takes less time ..same works for external tables also
 
 #to see partitions of a table named a5
     >show partitions a5;
@@ -76,6 +76,12 @@
 
 #to add a partition
     >alter table a5 add if not exists partition(job_name="dancer") location '/home/training/zakku/dancer';
+
+#dynamic partition
+    >create table new_t (id int,name string,age int) partitioned by(jobs string);
+    >set hive.exec.dynamic.partition.mode=nonstrict;
+    >insert into table new_t partition (jobs) select id,name,age,job from t6;
+
 
 #to get top n numbers(here 2)
     >select * from a5 limit 2;
@@ -144,6 +150,59 @@
     >select avg(age)  from t1 group by job having avg(age)>22;
     /*to  constrain the groups produced by GROUP BY
 
+#inner join
+    >select a.name,a.id,b.place from t1 a join t2 b on a.id=b.id;
+    /*t1 and t2 are tables..same for external tables
+
+#inner join with 3 tables
+    >select a.name,b.place,c.age from t1 a join t2 b on a.id=b.id join t3 c on b.id=c.id;
+
+#left join
+    >select a.name,b.pos from t1 a left outer join t4 b on a.id=b.id;
+    /*n this join, all the records from the lefthand table that match the WHERE clause are returned. If the righthand table doesn’t have a record that matches the ON criteria,
+    /*NULL is used for each column selected from the righthand table.
+
+#right join
+    >select a.name,b.pos from t4 a right outer join t1 b on a.id=b.id;
+    /*Right-outer joins return all records in the righthand table that match the WHERE clause.
+    /*NULL is used for fields of missing records in the lefthand table
+
+#full join
+    > select b.name,a.pos from t4 a full outer join t1 b on a.id=b.id;
+    /*inally, a full-outer join returns all records from all tables that match the WHERE clause.
+    /*NULL is used for fields in missing records in either table.
+
+#left semi join
+    >select a.name from t6 a left semi join t4 b on a.id=b.id;
+    /* left semi-join returns records from the lefthand table if records are found in the righthand table that satisfy the ON predicates
+    /*ote that the SELECT and WHERE clauses can’t reference columns from the righthand table
+
+#cartesian product join
+    >SELECT * FROM stocks JOIN dividends;
+    /* Cartesian product is a join where all the tuples in the left side of the join are paired with all the tuples of the right table.
+     /*If the left table has 5 rows and the right table has
+
+6 rows, 30 rows of output will be produced
+#order by
+    > select name,id from t6 order by id asc; /* order by id in ascending
+    > select name,id from t6 order by id desc; /* order by id in descending
+    > select name,id,age from t6 order by age asc,id desc; /* order by age in descending..for all repeating values order by id
+
+#sort by
+    > select name,id from t6 sort by id asc; /* sort by id in ascending
+    > select name,id from t6 sort by id desc; /* sort by id in descending
+    > select name,id,age from t6 sort by age asc,id desc; /* sort by age in descending..for all repeating values order by id
+
+
+#views
+    >create view q1 as
+     select a.name,b.place     
+     from t6 a join t4 b on(a.id=b.id);
+
+#deleting view
+    >DROP VIEW IF EXISTS shipments;
+
+
 
 
 
@@ -185,6 +244,20 @@
     >select explode(word) as w from input_split;   
     >create view input_explode as select explode(word) as w from input_split;
     >select w,count(*) from input_explode group by w;
+            OR(ZAKKU'S VERSION)
+
+    >create view count_pro as
+     select explode(split(lin,' ')) as w from story1;
+    >select w,count(*) from count_pro group by w;
+
+    2)total words in each sentence
+    >create table story1(lin string); 
+    >load data local inpath '/home/training/zakku/story.txt' into table story1;
+    >select size(split(lin,' ')) from story1;
+
+    3)size of each sentence
+    >select length(lin) from story1;
+
 
 #To see records within given limit   
     >select * from input limit 1;   /*gives first record..if limit2 give 2 records
@@ -208,22 +281,32 @@
     3)which genre has maximum movies
         $select g.genre,count(*) as nom from genre g join moviegenre mg on (g.gid=mg.gid) join movie m on (m.mid=mg.mid) group by g.genre;      /*total number in each genre
         $select g.genre,count(*) as nom from genre g join moviegenre mg on (g.gid=mg.gid) join movie m on (m.mid=mg.mid) group by g.genre order by nom limit 1;
+
+            OR 
+        >select a.n,b.genre                                          
+        from(select count(*) as n,gid from moviegenre group by gid)a join genre b on (a.gid=b.gid) 
+        order by a.n desc limit 1; 
+
     3)which movie is of which genre?
         $select m.mname,g.genre from movie m join moviegenre mg on (m.mid=mg.mid) join genre g on (g.gid=mg.gid);
 
-    4)in 2000,how many movies were under genre comedy?
+            OR
+        >select a.mname,b.genre
+        from movie a join moviegenre c on a.mid=c.mid left outer join genre b on c.gid=b.gid;
 
-CHECK           select year,count(*) from movie m join moviegenre mg on (m.mid=mg.mid) join genre g on (g.gid =mg.mid) where g.genre='Comedy' group by year having year ='2000';
-#we can see all tables in mysql metadata
+    4)in 2000,how many movies were under genre comedy?
+        >select count(*) 
+        from movie a join moviegenre c on a.mid=c.mid left outer join genre b on c.gid=b.gid
+        where a.year=2000 and b.genre="Comedy";  
+        
+#we can see all tables in mysql metadata by typing this in mysql
     use metastore
     select * from TBLS;
-#EXTERNAL tables
-    > create external table movieentertain(mid int,mname string) row format delimited fields terminated by ',' location '/entertain';
-    /*there is a csv file in /entertain we are transfering to hive as external table name movieentertain
 
-#HIVE PARTITIONS
-    create table moviepartition (mid int,mname string,year string) partitioned by (mgenre string) row format delimited fields terminated by '\t';
-    load data local inpath '/home/training/mov' into table moviepartition partition(mgenre='bus');
+
+
+
+
 
 #hive dynamic partition
 
