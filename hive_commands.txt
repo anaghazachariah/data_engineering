@@ -82,6 +82,14 @@
     >set hive.exec.dynamic.partition.mode=nonstrict;
     >insert into table new_t partition (jobs) select id,name,age,job from t6;
 
+#creating tables and loading them(copying)
+    >create table c1 as select id,name from t6 where id>4;
+
+#export hive data to local
+    >insert overwrite local directory '/home/training/zakku/expo' select id,name from t6;
+
+#export hive data to hdfs
+    >insert overwrite  directory '/anna/aq' select id,name from t6;
 
 #to get top n numbers(here 2)
     >select * from a5 limit 2;
@@ -303,19 +311,20 @@
     use metastore
     select * from TBLS;
 
-
-
-
-
-
-#hive dynamic partition
-
 #bucketing
 
 create view moviecomp as select m.mid,m.mname,m.year,g.gid,g.genre from movie m join moviegenre mg on (m.mid=mg.mid) join genre g on (g.gid=mg.gid);
 describe moviecomp;
-create table moviebucket (mid int,mname string,year string,gid int,gname string) clustered by (year) into 5 buckets;
+set hive.enforce.bucketing=true;
+create table moviebucket (mid int,mname string,year string,gid int,gname string) clustered by (mid) into 5 buckets;
 insert into table moviebucket select * from moviecomp;
+
+#bucketing and partition
+
+>set hive.enforce.bucketing=true;
+>set hive.exec.dynamic.partition.mode=nonstrict;
+>create table moviebuc(mid int,mname string,year string,gid int)partitioned by(genre string)clustered by(mid) into 5 buckets;
+>insert into table moviebuc partition(genre) select * from moviecomp; 
 
 
 
