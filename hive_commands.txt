@@ -108,6 +108,47 @@
 #to round mathematical operation
     >select round(id/2) from t1;
 
+#nested select
+    > from(select id,name from t1)e select e.id,upper(e.name) where id>2;
+
+#when then
+    >   SELECT name, salary,
+        CASE
+        WHEN salary < 50000.0 THEN 'low'
+        WHEN salary >= 50000.0 AND salary < 70000.0 THEN 'middle'
+        WHEN salary >= 70000.0 AND salary < 100000.0 THEN 'high'
+        ELSE 'very high'
+        END AS bracket FROM employees;
+    /*here bracket is part of syntax
+
+#where
+    >select * from emp where id>1;
+
+#comparing with float numbers
+    >select id from t1 where id> cast(1.5 as float);
+    /*cast(number as float)
+    
+#like
+    >select name from t1 where name like '%a';
+
+#rlike
+    >select name from t1 where name rlike '(a|g).*';
+    /*for regular expression. A period (.) matches
+    /*any character and a star (*) means repeat the “thing to the left” (period, in the two cases
+    /*shown) zero to many times. The expression (x|y) means match either x or y.
+
+#group by
+    >select avg(age)  from t1 group by job ;
+
+#having
+    >select avg(age)  from t1 group by job having avg(age)>22;
+    /*to  constrain the groups produced by GROUP BY
+
+
+
+
+
+
 
 
 
