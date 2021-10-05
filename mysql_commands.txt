@@ -23,3 +23,7 @@
 #To visualize all data in table1
     >select * from table1;
 
+#to execute a sql file
+    >source file_path;
+
+    

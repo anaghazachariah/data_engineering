@@ -324,7 +324,7 @@ insert into table moviebucket select * from moviecomp;
 >set hive.enforce.bucketing=true;
 >set hive.exec.dynamic.partition.mode=nonstrict;
 >create table moviebuc(mid int,mname string,year string,gid int)partitioned by(genre string)clustered by(mid) into 5 buckets;
->insert into table moviebuc partition(genre) select * from moviecomp; 
+>insert into table moviebuc partition(genre) select * from moviecomp; #to overwrite contents use insert overwrite
 
 
 
