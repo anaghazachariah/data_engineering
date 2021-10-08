@@ -1,3 +1,3 @@
 #delete directory
-    hdfs dfs -rm -r -r /PATH/TO/directory
+    hdfs dfs -rm -r -f /PATH/TO/directory
 
