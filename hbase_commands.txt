@@ -45,6 +45,8 @@ sh restart.sh
 #to exit hive
     exit
 
+    
+
 
 
 

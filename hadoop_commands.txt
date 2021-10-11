@@ -1,3 +1,5 @@
 #delete directory
     hdfs dfs -rm -r -f /PATH/TO/directory
+#to come out of safe mode for name node
+    hadoop dfsadmin -safemode leave
 

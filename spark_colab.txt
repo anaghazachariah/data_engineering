@@ -1,0 +1,61 @@
+#in colab
+!pip install pyspark
+
+from pyspark.sql import SparkSession
+spark=SparkSession.builder.appName('FIRSTSPARKAPP').getOrCreate()#creating spark object
+iris=spark.read.option('header','false').csv('/content/iris.data')#load iris data without header
+iris#display structure of data(ie types of all columns)
+iris.show()#shows first 20 records
+iris.show(30)#gives first 30 records
+type(iris)#pyspark.sql.dataframe.DataFrame
+iris.columns #column names
+#column name updation
+        iris=iris.withColumnRenamed('_c0','sepal_length')\
+        .withColumnRenamed('_c1','sepal_widthgth')\
+        .withColumnRenamed('_c2','petal_length')\
+        .withColumnRenamed('_c3','petal_width')\
+        .withColumnRenamed('_c4','label')
+iris.printSchema()#info about dataset and columns
+iris=iris.withColumn('sepal_length',iris['sepal_length'].cast('float'))#convert sepal lenth to float
+#cloumn type updation for all columns
+        iris=iris.withColumn('sepal_length',iris['sepal_length'].cast('float'))\
+        .withColumn('sepal_width',iris['sepal_width'].cast('float'))\
+        .withColumn('petal_length',iris['petal_length'].cast('float'))\
+        .withColumn('petal_width',iris['petal_width'].cast('float'))
+
+
+iris.select('petal_length').show() #select a col
+iris.select('petal_length','label').show()#to selct multiple cols
+iris.describe().show() #data description..leass than what we have in pandas
+iris=iris.withColumn('a',iris['sepal_length']*0.5)#added a new column modifying another column
+iris.na.drop().show() #drops rows with atleast 1 null values
+iris.na.drop(how='any').show() #drop rows with atleast 1 null
+iris.na.df.show() #gives first 20
+iris.na.drop(how='all').show() #drop rows with all values are null
+iris.na.drop(thresh=1).show() # keep records with atleast 1 non null value
+iris.na.drop(thresh=3).show() # keep records with atleast 3 non null values
+iris.na.drop(subset='sepal_length').show() # remove records with null value in sepal_length col
+iris.na.fill(999).show()#for all numeric type columns null replace with 999
+iris.na.fill('default').show()#for all string type columns null replace with default
+
+
+
+pandas
+
+import pandas as pd
+irisp=pd.read_csv("/content/iris.data",header=None)#load data
+irisp #show data
+irisp.columns #columns
+irisp.columns=['sepal_length','sepal_width','petal_legth','petal_width','label'] #to update column names of dataset
+irisp.info() #info about dataset and columns
+irisp['petal_legth'] #select a col
+irisp[['petal_legth','sepal_width']]#select multiple cols
+irisp.describe()#give data description
+irisp['a']=list_name #to add new col a
+
+
+numpy
+
+import numpy as np
+a=np.arange(0,152)#make an array
+a.shape #to get dimensions

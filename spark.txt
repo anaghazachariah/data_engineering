@@ -1,0 +1,31 @@
+
+#in slave as single node manner
+
+cd /usr/local/spark/sbin
+sh start-master.sh
+cd /usr/local/spark/sbin
+sh start-slave.sh spark://master:7077
+cd /usr/local/spark
+./bin/spark-shell
+
+#version
+spark.version
+
+
+#word-count example(local file)
+val text=sc.textFile("/root/data.txt")
+val counts = text.flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey(_+_)
+counts.collect
+
+#word-count example(hdfs file)
+val text1=sc.textFile("hdfs://slave:9000/anagha/a.txt")
+val counts1 = text1.flatMap(line =>line.split(" ")).map(word =>(word,1)).reduceByKey(_+_)
+counts1.collect()
+
+#to get out
+:q
+
+
+#in master
+
+start-all.sh
