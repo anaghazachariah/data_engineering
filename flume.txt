@@ -1,13 +1,17 @@
 #exporting data to hdfs from flume(file name mysqld.log)
 
-cd /etc/flume-ng/conf
-vi flume-ng.conf
-
 tail -f mysqld.log
 
 
+
+cd /etc/flume-ng/conf
+vi flume.conf
+
+
+flume.conf contents
+-------------
 agent.channels=memory-channel
-agent.sources=tail.source
+agent.sources=tail-source
 agent.sinks=hdfs-sink
 agent.sources.tail-source.type=exec
 agent.sources.tail-source.command=tail -F /var/log/mysqld.log

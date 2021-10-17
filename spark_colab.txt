@@ -1,61 +1,404 @@
+/*spark and pandas difference..pyspark runs in distributed environment...if it is a single node cluster use pandas..big data tools are not for small
+datsets
+
 #in colab
 !pip install pyspark
-
 from pyspark.sql import SparkSession
-spark=SparkSession.builder.appName('FIRSTSPARKAPP').getOrCreate()#creating spark object
-iris=spark.read.option('header','false').csv('/content/iris.data')#load iris data without header
-iris#display structure of data(ie types of all columns)
-iris.show()#shows first 20 records
-iris.show(30)#gives first 30 records
-type(iris)#pyspark.sql.dataframe.DataFrame
-iris.columns #column names
+spark=SparkSession.builder.appName('FIRSTSPARKAPP').getOrCreate()#creating spark object..give app name in bracket
+
+
+#creating dataframe
+from datetime import datetime, date
+import pandas as pd
+from pyspark.sql import Row
+df = spark.createDataFrame([
+    Row(a=1, b=2., c='string1', d=date(2000, 1, 1), e=datetime(2000, 1, 1, 12, 0)),
+    Row(a=2, b=3., c='string2', d=date(2000, 2, 1), e=datetime(2000, 1, 2, 12, 0)),
+    Row(a=4, b=5., c='string3', d=date(2000, 3, 1), e=datetime(2000, 1, 3, 12, 0))
+])
+df.show()
+
+
+#creating databse
+df1 = spark.createDataFrame([
+    (1, 2., 'string1', date(2000, 1, 1), datetime(2000, 1, 1, 12, 0)),
+    (2, 3., 'string2', date(2000, 2, 1), datetime(2000, 1, 2, 12, 0)),
+    (3, 4., 'string3', date(2000, 3, 1), datetime(2000, 1, 3, 12, 0))
+], schema='a long, b double, c string, d date, e timestamp')
+df1.show()
+
+
+#to convert spark to pandas
+df.toPandas()
+
+
+
+#LOADING DATA
+iris=spark.read.option('header','false').csv('/content/iris.data')#load iris data without header along with data
+iris=spark.read.option('header','true').csv('/content/iris.data')#load iris data with header along with data
+
+
+
+#display structure of data(ie columns and types of all columns)
+iris
+
+#shows first 20 records
+iris.show()
+
+#gives first 30 records
+iris.show(30)
+
+#SHOWING TYPE...pyspark.sql.dataframe.DataFrame
+type(iris)
+
+#column names
+iris.columns 
+
+
 #column name updation
+
         iris=iris.withColumnRenamed('_c0','sepal_length')\
         .withColumnRenamed('_c1','sepal_widthgth')\
         .withColumnRenamed('_c2','petal_length')\
         .withColumnRenamed('_c3','petal_width')\
         .withColumnRenamed('_c4','label')
-iris.printSchema()#info about dataset and columns
-iris=iris.withColumn('sepal_length',iris['sepal_length'].cast('float'))#convert sepal lenth to float
+
+
+#info about dataset and columns
+iris.printSchema()
+
+#convert sepal lenth to float
+iris=iris.withColumn('sepal_length',iris['sepal_length'].cast('float'))
+
+
 #cloumn type updation for all columns
         iris=iris.withColumn('sepal_length',iris['sepal_length'].cast('float'))\
         .withColumn('sepal_width',iris['sepal_width'].cast('float'))\
         .withColumn('petal_length',iris['petal_length'].cast('float'))\
         .withColumn('petal_width',iris['petal_width'].cast('float'))
 
+#select a col
+iris.select('petal_length').show() 
 
-iris.select('petal_length').show() #select a col
-iris.select('petal_length','label').show()#to selct multiple cols
-iris.describe().show() #data description..leass than what we have in pandas
-iris=iris.withColumn('a',iris['sepal_length']*0.5)#added a new column modifying another column
-iris.na.drop().show() #drops rows with atleast 1 null values
-iris.na.drop(how='any').show() #drop rows with atleast 1 null
-iris.na.df.show() #gives first 20
-iris.na.drop(how='all').show() #drop rows with all values are null
-iris.na.drop(thresh=1).show() # keep records with atleast 1 non null value
-iris.na.drop(thresh=3).show() # keep records with atleast 3 non null values
-iris.na.drop(subset='sepal_length').show() # remove records with null value in sepal_length col
-iris.na.fill(999).show()#for all numeric type columns null replace with 999
-iris.na.fill('default').show()#for all string type columns null replace with default
+#to select multiple cols
+iris.select('petal_length','label').show()
+
+#data description..leass than what we have in pandas
+iris.describe().show() 
+
+#added a new column modifying another column
+iris=iris.withColumn('a',iris['sepal_length']*0.5)
+
+#to delete column(add extra columns by putting , in columns to drop list)
+columns_to_drop = ['a']
+iris = iris.drop(*columns_to_drop)
+iris.show(5)
+
+#gives first 20
+iris.na.df.show() 
+
+#drops rows with atleast 1 null values
+iris.na.drop().show() 
+
+#drop rows with atleast 1 null..default how value is any...how works for null values
+iris.na.drop(how='any').show() 
+
+#drop rows with all values are null..how have only 2 values..any and all
+iris.na.drop(how='all').show() 
+
+# keep records with atleast 1 non null value..default is none..thresh works for non null value
+iris.na.drop(thresh=1).show() 
+
+# keep records with atleast 3 non null values
+iris.na.drop(thresh=3).show() 
+
+# remove records with null value in sepal_length col..helps to apply drop in specified cols
+iris.na.drop(subset='sepal_length').show() 
+
+#for all numeric type columns null replace with 999..if <=5% of data have null we can drop that..if we have >5% of data with null we have to fill
+iris.na.fill(999).show()
+
+#for all string type columns null replace with default
+iris.na.fill('default').show()
+
+#remove null from label col
+iris1=iris.dropna(subset='label')
+iris1.show()
+
+#replace null value with mean..
+from pyspark.ml.feature import Imputer
+imputer=Imputer(inputCols=['sepal_length', 'sepal_width', 'petal_length', 'petal_width'],
+                outputCols=['sepal_length', 'sepal_width', 'petal_length', 'petal_width'],
+                strategy='mean')
+imputer.fit(iris1).transform(iris1).show()
+
+#to replace null value with mean and create new cols for replaced cols
+from pyspark.ml.feature import Imputer
+imputer=Imputer(inputCols=['sepal_length', 'sepal_width', 'petal_length', 'petal_width'],
+                outputCols=["{}_new".format(c) for c in ['sepal_length', 'sepal_width', 'petal_length', 'petal_width']],
+                strategy='mean')
+imputer.fit(iris1).transform(iris1).show()
+
+#display values >threshhold for particular col
+iris.filter("sepal_length > 5").show(5)
+
+
+#to select sepal_length,sepal_width and label of col with sepal_legth>5
+iris.filter("sepal_length > 5").select(["sepal_length","sepal_width","label"]).show(5)
+
+#to select sepal_length,sepal_width and label of col with 4<sepal_legth<5
+iris.filter((iris['sepal_length'] > 4) & (iris['sepal_length'] < 5)).select(["sepal_length","sepal_width","label"]).show(5)
+
+#to select records with label!=iris-setosa
+iris.filter(~(iris['label']=="Iris-setosa")).show(5)
+
+# aggregate functions in spark are [avg, max, min, sum, count]
+#display sum of petal width of each label type
+iris.groupBy("label").sum('petal_width').show(5)
+
+#display min of petal width of each label type
+iris.groupBy("label").min('petal_width').show(5)
+
+#display max of petal width of each label type
+iris.groupBy("label").max('petal_width').show(5)
+
+#display avg of petal width of each label type
+iris.groupBy("label").avg('petal_width').show(5)
+
+#display count of records  of each label type
+iris.groupBy("label").count().show(5)
+
+#MORE CODE 
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import approx_count_distinct,collect_list
+from pyspark.sql.functions import collect_set,sum,avg,max,countDistinct,count
+from pyspark.sql.functions import first, last, kurtosis, min, mean, skewness 
+from pyspark.sql.functions import stddev, stddev_samp, stddev_pop, sumDistinct
+from pyspark.sql.functions import variance,var_samp,  var_pop
+print("approx_count_distinct: " +  str(df.select(approx_count_distinct("salary")).collect()[0][0]))
+print("avg: " + str(df.select(avg("salary")).collect()[0][0]))
+df.select(collect_list("salary")).show(truncate=False)
+df.select(collect_set("salary")).show(truncate=False)
+df2 = df.select(countDistinct("department", "salary"))
+df2.show(truncate=False)
+print("Distinct Count of Department & Salary: "+str(df2.collect()[0][0]))
+print("count: "+str(df.select(count("salary")).collect()[0]))
+df.select(first("salary")).show(truncate=False)
+df.select(last("salary")).show(truncate=False)
+df.select(kurtosis("salary")).show(truncate=False)
+df.select(max("salary")).show(truncate=False)
+df.select(min("salary")).show(truncate=False)
+df.select(mean("salary")).show(truncate=False)
+df.select(skewness("salary")).show(truncate=False)
+df.select(stddev("salary"), stddev_samp("salary"), \
+    stddev_pop("salary")).show(truncate=False)
+df.select(sum("salary")).show(truncate=False)
+df.select(sumDistinct("salary")).show(truncate=False)
+df.select(variance("salary"),var_samp("salary"),var_pop("salary")) \
+  .show(truncate=False)
+
+
+#to get maximum value in petal width
+iris.agg({'petal_width':'max'}).show()
+
+#loading builtin datset(first to pandas then to park)
+from sklearn import datasets
+data=datasets.load_iris()
+pd_df = pd.DataFrame(data.data,columns=data.feature_names)
+ss_df=spark.createDataFrame(pd_df)
+ss_df.show(5)
+
+#function to multiply each value by 2
+from pyspark.sql.functions import pandas_udf
+def pandas_double(series: pd.Series) -> pd.Series:
+  return series * 2
+iris.select(pandas_double(iris.sepal_length)).show(5)
+
+#function to select rows with sepal_length>5
+def pandas_filter(iterator):
+  for pandas_df in iterator:
+    yield pandas_df[pandas_df.sepal_length>5.0]
+iris.mapInPandas(pandas_filter, schema=iris.schema).show(5)
+
+#to save .csv file
+iris.write.csv('iris1_output.csv')
+
+#to read parquet data fromat
+userdata=spark.read.parquet('/content/userdata1.parquet')
+userdata.show(5)
+
+#to save parquet file
+userdata.write.parquet("userdata.parquet")
+
+#to read data in .orc format
+user_orc=spark.read.orc('/content/userdata1_orc')
+user_orc.show(5)
+
+#to save data in .orc format
+user_orc.write.orc("orcfile.orc")
+
+#to use sql query
+iris.createOrReplaceTempView("irisdata")#creating view
+spark.sql('SELECT COUNT(*) FROM irisdata').show()
+spark.sql('select sum(petal_width) from irisdata').show()
+
+#function to add 1 to all valyes in petal_width
+import pandas as pd
+def add_one(s:pd.Series)->pd.Series:
+  return s+1
+spark.udf.register("add_one",add_one)#registering function
+iris3=iris.select('petal_length','petal_width') #selecting cols
+iris3=iris3.dropna()#removing null
+iris3.createOrReplaceTempView("irisdata2")#creating view
+spark.sql('select add_one(petal_width) from irisdata2').show()
 
 
 
-pandas
+
+
+
+
+
+
+
+PANDAS
 
 import pandas as pd
-irisp=pd.read_csv("/content/iris.data",header=None)#load data
-irisp #show data
-irisp.columns #columns
-irisp.columns=['sepal_length','sepal_width','petal_legth','petal_width','label'] #to update column names of dataset
-irisp.info() #info about dataset and columns
-irisp['petal_legth'] #select a col
-irisp[['petal_legth','sepal_width']]#select multiple cols
-irisp.describe()#give data description
-irisp['a']=list_name #to add new col a
+
+#load data
+irisp=pd.read_csv("/content/iris.data",header=None)
+
+#show data
+irisp 
+
+#shows first 20..default 5
+irisp.head(20)
+
+#to show column names
+irisp.columns 
+
+#changing column names
+irisp.columns=['sepal_length','sepal_width','petal_legth','petal_width','label'] 
+
+#info about dataset and columns
+irisp.info() 
+
+#to change datatype..(we cannot convert na to int)
+irisp[['sepal_length', 'sepal_width','petal_legth','petal_width']]= irisp[['sepal_length', 'sepal_width','petal_legth','petal_width']]\
+.astype('float')
 
 
-numpy
+#select a col
+irisp['petal_legth'] 
 
+#select multiple cols
+irisp[['petal_legth','sepal_width']]
+
+
+#give data description
+irisp.describe()
+
+#to add new col a
 import numpy as np
 a=np.arange(0,152)#make an array
 a.shape #to get dimensions
+irisp['a']=list_name 
+
+
+#to delete a column
+irisp.drop('a', inplace=True, axis=1)
+irisp.head(5)
+
+#to drop multiple cols 
+df.drop(columns=['col_1', 'col_2','col_N'])
+
+
+#to add new col from another col
+irisp['a']=irisp['sepal_length']*0.5
+irisp.head()
+
+
+#to check a col value is null or not(true for null)
+irisp.isnull()
+
+#only the rows having Gender = NULL are displayed
+bool_series = pd.isnull(data["Gender"]) 
+data[bool_series] 
+
+#to check a col value is notnull or not(true for not null)
+irisp.notnull()
+
+#only the rows having Gender = NOT NULL are displayed
+bool_series = pd.notnull(data["Gender"]) 
+data[bool_series] 
+
+#to fill NULL values with 0
+irisp.fillna(0).head(5)
+
+#to replace NULL with previous values
+irisp.fillna(method ='pad').head(5)
+
+#to replace null value with next value
+irisp.fillna(method ='bfill').head(5)
+
+#to replace missing values in a colchange in actual datset
+irisp["label"].fillna("label", inplace = True)
+irisp.head(5)
+
+#replace  Nan value in dataframe with value -99  
+import numpy as np 
+irisp.replace(to_replace = np.NaN, value = -99).head(5)
+
+#Dropping Rows with at least 1 null value
+irisp.dropna(axis = 0, how ='any').head(5)
+
+#To drop col with atleast 1 null value
+irisp.dropna(axis = 1).head()
+
+#to drop rows with all values as NULL
+irisp.dropna(how = 'all').head(5)
+
+#drop rows with at least one NULL
+irisp.dropna().head(5)
+
+#to replace missing values with mean
+from sklearn.impute import SimpleImputer
+irisp1=irisp[['sepal_length','sepal_width','petal_legth','petal_width']] 
+imputer = SimpleImputer(missing_values = np.nan,strategy ='mean')#strategy can be  ['mean', 'median', 'most_frequent', 'constant']
+imputer = imputer.fit(irisp1).transform(irisp1)
+imputer
+
+
+#loading builtin datset
+from sklearn import datasets
+data=datasets.load_iris()
+pd_df = pd.DataFrame(data.data,columns=data.feature_names)
+pd_df.head(5)
+
+#to save .csv file
+irisp.to_csv('irioutput.csv')
+
+#queries in pandas
+import pandasql as ps
+print(ps.sqldf("select count(*) from irisp",locals()))
+print(ps.sqldf("select sum(sepal_width) from irisp",locals()))
+print(ps.sqldf("select * from irisp where petal_width>1",locals()).head(5))
+
+#groupby
+#display count 
+print(irisp.groupby("label").count())
+#display minimum 
+print(irisp.groupby("label").min())
+#display maximum 
+print(irisp.groupby("label").max())
+#display sum 
+print(irisp.groupby("label").sum())
+#display mean 
+print(irisp.groupby("label").mean())
+#display median 
+print(irisp.groupby("label").median())
+
+#print sepal length,width and label of records with 4<length<5
+print(irisp[['sepal_length','sepal_width','label']].where(irisp['sepal_length']>4.0 ).where(irisp['sepal_length']<5.0 ).dropna(how = 'all').head(5))# use .reset_index() at end to startr index from 0
+#print records with label!=iris setosa
+print(irisp[irisp['label']!="Iris-setosa"].dropna(how = 'all').head(5))
