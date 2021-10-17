@@ -1,0 +1,161 @@
+#--------------KMEANS IN Spark -------------
+from pyspark.ml.clustering import KMeans
+from pyspark.ml.feature import VectorAssembler
+import matplotlib.pyplot as plt
+import pandas as pd
+iris=spark.read.csv('/content/iris.data')
+iris=iris.withColumnRenamed('_c0','sl')\
+.withColumnRenamed('_c1','sw')\
+.withColumnRenamed('_c2','pe')\
+.withColumnRenamed('_c3','pw')\
+.withColumnRenamed('_c4','label')
+iris=iris.withColumn('sl',iris['sl'].cast('float'))\
+.withColumn('sw',iris['sw'].cast('float'))\
+.withColumn('pe',iris['pe'].cast('float'))\
+.withColumn('pw',iris['pw'].cast('float'))
+iris=iris.dropna()#drop NA values
+iris2=iris.toPandas()#making a pandas copy to map labels to integers
+lab={'Iris-setosa':0,'Iris-versicolor':1,'Iris-virginica':2}
+iris2['label']=iris2['label'].map(lambda x: lab[x])#giving numerical values to labels
+training_labels=list(iris2['label'])#making a list with numerical value for labels
+assembler=VectorAssembler(inputCols=['sl','sw','pe','pw'],outputCol='features')#clubing cols for training
+iris_a=assembler.transform(iris)#passing dataset to assembler
+kmeans=KMeans().setK(3).setSeed(1)#kmeans with 3 clusters and seed1
+model=kmeans.fit(iris_a)#fitting data to kmeans
+pred=model.transform(iris_a)#transforming
+iris_pd=pred.toPandas()#changing to pandas to plo
+fig,axs=plt.subplots(2)#plot 2 graphs
+axs[0].scatter(iris_pd['sl'],iris_pd['sw'],c=iris_pd['prediction'])#predicted
+axs[1].scatter(iris_pd['sl'],iris_pd['sw'],c=training_labels)#actual
+
+
+
+#k can be identified by elbow method,silhouette_score METHOD and from awarness of dataset..for iris we know we have 3 categories of labels..so k=3
+#----HOW TO CHOOSE K (NUMBER OF CLUISTERS)ELBOW METHOD
+import pandas as pd
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+data=pd.read_csv('/content/iris.data',header=None)
+data.columns=['sepal_length','sepal_width','petal_length','petal_width','label']
+data=data.dropna()#dropping null values
+lab={'Iris-setosa':0,'Iris-versicolor':1,'Iris-virginica':2}
+data['label']=data['label'].map(lambda x: lab[x])#giving numerical values to labels
+sse={}#sum of squared errors
+for k in range(1,10):
+  kmeans=KMeans(n_clusters=k,max_iter=1000,).fit(data)
+  data['clusters']=kmeans.labels_
+  sse[k]=kmeans.inertia_
+plt.figure()
+plt.plot(list(sse.keys()),list(sse.values()))
+plt.xlabel('No of clusters')
+plt.ylabel('Sum of squared erros')
+#look for the number at which elbow get created
+
+
+
+#----HOW TO CHOOSE K (NUMBER OF CLUISTERS)silhouette_score METHOD
+import pandas as pd
+from sklearn.metrics import silhouette_score
+import matplotlib.pyplot as plt
+data=pd.read_csv('/content/iris.data',header=None)
+data.columns=['sepal_length','sepal_width','petal_length','petal_width','label']
+data=data.dropna()#dropping null values
+lab={'Iris-setosa':0,'Iris-versicolor':1,'Iris-virginica':2}
+data['label']=data['label'].map(lambda x: lab[x])#giving numerical values to labels
+for k in range(2,11):
+  kmeans=KMeans(n_clusters=k).fit(data)
+  label=kmeans.labels_
+  sil_coeff=silhouette_score(data,label,metric="euclidean")
+  print("for k={},the silhouette_coefficient is {}".format(k,sil_coeff))
+#choose the one with high silhouette_coefficient...
+
+
+
+#---------term frequency(how many times word occur in documrnt)
+doc="""anagha is zakku is"""
+print(doc)
+def wordcount(str):
+  dic={}
+  a=doc.split()
+  for i in a:
+    if i not in dic.keys():
+      dic[i]=1
+    else:
+      dic[i]=dic[i]+1
+  return dic
+val=wordcount(doc)
+print(val)
+
+
+#-----------------idf-inverse doc freq...idf=total documents having term/total docs
+doc1='ana anna'
+doc2='ty yu io'
+doc3='tyh rbrte ana'
+words=doc1.split()#here we are taking words in doc1 for testing
+tdht=0
+td=0
+freq={}
+for word in  words:
+  tdht=0
+  if word in (doc1.split()):
+    tdht=tdht+1
+  if word in (doc2.split()):
+    tdht+=1
+  if word in (doc3.split()):
+    tdht+=1
+  freq[word]=tdht
+print(freq)#inverse frequency count of each word
+
+
+#----logistic regression
+from pyspark.ml.classification import LogisticRegression
+from sklearn import datasets
+import pandas as pd
+from pyspark.ml.feature import VectorAssembler
+data=datasets.load_wine()
+data.target_names#targets
+data.target#claasses
+pd_df = pd.DataFrame(data.data)#pandas dataframe
+pd_df['target']=data.target#adding target cols
+data1=spark.createDataFrame(pd_df)#pandas to spark
+va=VectorAssembler(inputCols=['0','1','2','3','4','5','6','7','8','9','10','11','12'],outputCol='features')#clubing cols for training
+training_data=va.transform(data1)#passing dataset to assembler
+lr = LogisticRegression(featuresCol='features',labelCol='target')
+lrModel = lr.fit(training_data)#fit the model
+pred=lrModel.transform(training_data)#not need to mention whether it is binomial or binomial
+pred.show(5)
+
+
+#----logistic regression absenteeism dataset
+from pyspark.ml.classification import LogisticRegression
+from sklearn import datasets
+from pyspark.ml.feature import VectorAssembler
+data=spark.read.options(inferSchema='True',delimiter=';',header='True').csv("/content/Absenteeism_at_work.csv")
+va=VectorAssembler(inputCols=['ID','Reason for absence','Month of absence','Day of the week','Seasons',
+                              'Transportation expense','Distance from Residence to Work','Service time','Age',
+                              'Work load Average/day ','Hit target','Disciplinary failure','Education','Son',
+                              'Social drinker','Social smoker','Pet','Weight','Height','Body mass index',],outputCol='features')
+training_data=va.transform(data)
+lr = LogisticRegression(featuresCol='features',labelCol='Absenteeism time in hours')
+lrModel = lr.fit(training_data)
+pred=lrModel.transform(training_data)
+pred.show(10)
+
+
+#------------KMEANS IN PANDAS-------------
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+data=pd.read_csv('/content/iris.data',header=None)
+data.columns=['sepal_length','sepal_width','petal_length','petal_width','label']
+data=data.dropna()#dropping null values
+lab={'Iris-setosa':0,'Iris-versicolor':1,'Iris-virginica':2}
+data['label']=data['label'].map(lambda x: lab[x])#giving numerical values to labels
+x=data[['sepal_length','sepal_width','petal_length','petal_width']]#selecting all columns except labels for training
+kmeans=KMeans(n_clusters=3)#kmeans with 3 clusters
+kmeans.fit(x)#fitting data
+y=kmeans.transform(x)#transforming x
+clustersy=kmeans.predict(x)#making clusters
+fig,axs=plt.subplots(2)#plot 2 graphs
+axs[0].scatter(x['petal_length'],x['petal_width'],c=clustersy)#predcited values
+axs[1].scatter(x['petal_length'],x['petal_width'], c=list(data['label']))#orginal values
