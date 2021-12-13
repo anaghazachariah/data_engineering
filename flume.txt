@@ -1,5 +1,5 @@
 #exporting data to hdfs from flume(file name mysqld.log)
-
+cd /var/log/
 tail -f mysqld.log
 
 

@@ -1,4 +1,12 @@
 
+#to start node manager in slave
+yarn-daemon.sh start nodemanager
+
+
+#to start resource manager in slave
+yarn-daemon.sh start resourcemanager
+
+
 #in slave as single node manner
 
 cd /usr/local/spark/sbin
@@ -29,3 +37,38 @@ counts1.collect()
 #in master
 
 start-all.sh
+
+
+---------DESKTOP VERSION********
+
+nmcli conn up ens33
+start-all.sh
+
+#to open jupyter
+jupyter notebook --allow-root
+
+#for spark console
+cd usr/local/
+pyspark
+
+
+#to close spark console
+exit()
+
+
+#reading data from hdfs in spark console
+spark.read.csv("hdfs://master:9000/anagha/ana.csv").show()
+
+#in jupyter notebook
+!pip install pydoop
+import pydooppydoop.VERSION
+!pip install gspread oauth2client
+
+
+#to run mapper and reducer
+    #type followng in script.py
+    def mapper(-, text,writer):
+        for word in text.split():
+            writer.emit(word,1)
+    def reducer(word,icounts,writer):
+        writer.emit(word,sum(icounts))
